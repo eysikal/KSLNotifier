@@ -9,31 +9,30 @@ class KSLScraper
 {
 
     private $mail;
-    private $searchTerm;
 
-    public function go()
+    public function go($searchString)
     {
         $client = new Client();
-        $previousResultsList = [];
-        $counter = 0;
         $this->setUpMail();
-        $this->searchTerm = 'purple%20pillow';
+        $previousResultsList = [];
+        $firstRun = true;
 
         do {
-            $crawler = $client->request('GET', "https://classifieds.ksl.com/search/keyword/$this->searchTerm");
+            $crawler = $client->request('GET', "https://classifieds.ksl.com/search/keyword/$searchString");
             $resultsList = $crawler->filter('.listing-item-link')->extract(['href']);
             $newResults = array_diff($resultsList, $previousResultsList);
-            if (count($newResults) > 0 && $counter > 0) {
-                $message = '';
+            if (count($newResults) > 0 && !$firstRun) {
+                echo "\n" . 'Found new results!' . "\n";
+                $newResultsString = '';
                 foreach ($newResults as $result) {
-                    $message .= 'https://classifieds.ksl.com' . $result . "\n\n";
+                    $newResultsString .= 'https://classifieds.ksl.com' . $result . "\n\n";
                 }
-                $this->sendNotification($message);
+                $this->sendNotification($newResultsString);
             }
 
             $previousResultsList = $resultsList;
+            $firstRun = false;
             echo '.';
-            $counter++;
 
             sleep(random_int(10, 15) * 60);
         } while (1);
@@ -51,19 +50,20 @@ class KSLScraper
 
     private function setUpMail()
     {
+        $emailSettings = require_once './email-settings.php';
         $this->mail = new PHPMailer(true);
 
         try {
-            $this->mail->SMTPDebug = SMTP::DEBUG_SERVER;
+            // $this->mail->SMTPDebug = SMTP::DEBUG_SERVER;
             $this->mail->isSMTP();
-            $this->mail->Host       = 'smtp.mail.yahoo.com';
+            $this->mail->Host       = $emailSettings['host'];
             $this->mail->SMTPAuth   = true;
-            $this->mail->Username   = 'eysikal@yahoo.com';
-            $this->mail->Password   = 'zhgcshomhxqgwzlc';
+            $this->mail->Username   = $emailSettings['username'];
+            $this->mail->Password   = $emailSettings['password'];
             $this->mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-            $this->mail->Port       = 587;
-            $this->mail->setFrom('eysikal@yahoo.com', 'KSL Notifier');
-            $this->mail->addAddress('8016029128@vtext.com');
+            $this->mail->Port       = $emailSettings['port'];
+            $this->mail->setFrom($emailSettings['fromAddress'], 'KSL Notifier');
+            $this->mail->addAddress($emailSettings['toAddress']);
             $this->mail->Subject = 'New KSL Classifieds Result(s)';
         } catch (Exception $e) {
             echo "Message could not be sent. Mailer Error: {$this->mail->ErrorInfo}";
