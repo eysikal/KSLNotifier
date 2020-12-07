@@ -54,7 +54,7 @@ class KSLScraper
         $this->mail = new PHPMailer(true);
 
         try {
-            // $this->mail->SMTPDebug = SMTP::DEBUG_SERVER;
+            $this->mail->SMTPDebug = SMTP::DEBUG_SERVER;
             $this->mail->isSMTP();
             $this->mail->Host       = $emailSettings['host'];
             $this->mail->SMTPAuth   = true;
