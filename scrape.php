@@ -6,7 +6,10 @@ require_once './KSLScraper.php';
 if (!$argv[1]) {
     throw new Exception('No search string provided. Nothing to search.');
 }
-
 $searchString = rawurlencode($argv[1]);
 
-(new KSLScraper())->go($searchString);
+$email = isset($argv[2])
+    ? $argv[2]
+    : null;
+
+(new KSLScraper($searchString, $email))->go();
