@@ -7,18 +7,24 @@ use PHPMailer\PHPMailer\Exception;
 
 class KSLScraper
 {
-
     private $mail;
+    private $email;
 
-    public function go($searchString)
+    public function __construct($searchString, $email = null)
     {
-        $client = new Client();
+        $this->searchString = $searchString;
+        $this->email = $email;
+        $this->client = new Client();
         $this->setUpMail();
+    }
+
+    public function go()
+    {
         $previousResultsList = [];
         $firstRun = true;
 
         do {
-            $crawler = $client->request('GET', "https://classifieds.ksl.com/search/keyword/$searchString");
+            $crawler = $this->client->request('GET', "https://classifieds.ksl.com/search/keyword/$this->searchString");
             $resultsList = $crawler->filter('.listing-item-link')->extract(['href']);
             $newResults = array_diff($resultsList, $previousResultsList);
             if (count($newResults) > 0 && !$firstRun) {
@@ -63,7 +69,11 @@ class KSLScraper
             $this->mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
             $this->mail->Port       = $emailSettings['port'];
             $this->mail->setFrom($emailSettings['fromAddress'], 'KSL Notifier');
-            $this->mail->addAddress($emailSettings['toAddress']);
+            $this->mail->addAddress(
+                is_null($this->email)
+                    ? $emailSettings['toAddress']
+                    : $this->email
+            );
             $this->mail->Subject = 'New KSL Classifieds Result(s)';
         } catch (Exception $e) {
             echo "Message could not be sent. Mailer Error: {$this->mail->ErrorInfo}";
