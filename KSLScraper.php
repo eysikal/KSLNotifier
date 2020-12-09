@@ -75,7 +75,7 @@ class KSLScraper
                     ? $emailSettings['toAddress']
                     : $this->email
             );
-            $this->mail->Subject = 'New KSL Classifieds Result(s) for "' . $this->searchString . '"';
+            $this->mail->Subject = 'New KSL Classifieds Result(s) for "' . rawurldecode($this->searchString) . '"';
         } catch (Exception $e) {
             echo "Message could not be sent. Mailer Error: {$this->mail->ErrorInfo}";
         }
