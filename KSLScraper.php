@@ -9,6 +9,7 @@ class KSLScraper
 {
     private $mail;
     private $email;
+    private $searchString;
 
     public function __construct($searchString, $email = null)
     {
@@ -74,7 +75,7 @@ class KSLScraper
                     ? $emailSettings['toAddress']
                     : $this->email
             );
-            $this->mail->Subject = 'New KSL Classifieds Result(s)';
+            $this->mail->Subject = 'New KSL Classifieds Result(s) for "' . $this->searchString . '"';
         } catch (Exception $e) {
             echo "Message could not be sent. Mailer Error: {$this->mail->ErrorInfo}";
         }
