@@ -32,7 +32,7 @@ class KSLScraper
                 echo "\n" . 'Found new results!' . "\n";
                 $newResultsString = '';
                 foreach ($newResults as $key => $result) {
-                    $newResultsString .= '#' . $key . ' https://classifieds.ksl.com' . $result . "\n\n";
+                    $newResultsString .= '#' . (int) $key + 1 . ' https://classifieds.ksl.com' . $result . "\n\n";
                 }
                 $this->sendNotification($newResultsString);
             }
