@@ -30,9 +30,9 @@ class KSLScraper
             $newResults = array_diff($resultsList, $previousResultsList);
             if (count($newResults) > 0 && !$firstRun) {
                 echo "\n" . 'Found new results!' . "\n";
-                $newResultsString = '';
+                $newResultsString = "\n\n";
                 foreach ($newResults as $key => $result) {
-                    $newResultsString .= '#' . (int) $key + 1 . ' https://classifieds.ksl.com' . $result . "\n\n";
+                    $newResultsString .= '#' . ($key + 1) . ' https://classifieds.ksl.com' . $result . "\n\n";
                 }
                 $this->sendNotification($newResultsString);
             }
