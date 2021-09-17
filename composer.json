@@ -1,6 +1,6 @@
 {
     "require": {
         "fabpot/goutte": "^4.0",
-        "phpmailer/phpmailer": "^6.2"
+	"sendgrid/sendgrid": "~7"
     }
 }
