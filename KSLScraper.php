@@ -1,8 +1,6 @@
 <?php
 
-use Exception;
 use Goutte\Client;
-use SendGrid;
 use SendGrid\Mail\Mail;
 
 class KSLScraper
