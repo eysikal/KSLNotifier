@@ -2,6 +2,8 @@
 
 use Exception;
 use Goutte\Client;
+use SendGrid;
+use SendGrid\Mail\Mail;
 
 class KSLScraper
 {
@@ -51,13 +53,13 @@ class KSLScraper
 	    $this->sendgrid->send($this->mail);
         } catch (Exception $e) {
             echo 'Error sending email: ' . $e->getMessage() . "\n";
-	}
+	    }
     }
 
     private function setUpMail()
     {
         $emailSettings = require_once './email-settings.php';    
-        $this->mail = new \SendGrid\Mail\Mail(); 
+        $this->mail = new Mail(); 
         $this->mail->setFrom('no-reply@russell.net', 'KSL Notifier');
         $this->mail->setSubject('New KSL Classifieds Result(s) for "' . rawurldecode($this->searchString) . '"');
         $this->mail->addTo(
@@ -66,6 +68,6 @@ class KSLScraper
                 : $this->email,
             'KSL Notifier User'
         );
-        $this->sendgrid = new \SendGrid($emailSettings['sendgridApiKey']);
+        $this->sendgrid = new SendGrid($emailSettings['sendgridApiKey']);
     }
 }
