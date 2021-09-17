@@ -1,9 +1,9 @@
 <?php
 
+use Exception;
 use Goutte\Client;
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\SMTP;
-use PHPMailer\PHPMailer\Exception;
+use SendGrid;
+use SendGrid\Mail\Mail;
 
 class KSLScraper
 {
@@ -26,8 +26,8 @@ class KSLScraper
 
         do {
             $crawler = $this->client->request('GET', "https://classifieds.ksl.com/search/keyword/$this->searchString");
-            $resultsList = $crawler->filter('.listing-item-link')->extract(['href']);
-            $newResults = array_diff($resultsList, $previousResultsList);
+            $resultsList = $crawler->filter('.item-info-title-link a')->extract(['href']);
+	        $newResults = array_diff($resultsList, $previousResultsList);
             if (count($newResults) > 0 && !$firstRun) {
                 echo "\n" . 'Found new results!' . "\n";
                 $newResultsString = "\n\n";
@@ -41,43 +41,33 @@ class KSLScraper
             $firstRun = false;
             echo '.';
 
-            sleep(random_int(10, 15) * 60);
+            sleep(random_int(5, 10) * 60);
         } while (1);
     }
 
     private function sendNotification($newResults = null)
     {
-        try {
-            $this->mail->Body = $newResults;
-            $this->mail->send();
+	try {
+	    $this->mail->addContent('text/plain', $newResults);
+	    $this->mail->addContent('text/html', $newResults);
+	    $this->sendgrid->send($this->mail);
         } catch (Exception $e) {
-            echo 'Mailer Error: ' . $this->mail->ErrorInfo;
-        }
+            echo 'Error sending email: ' . $e->getMessage() . "\n";
+	    }
     }
 
     private function setUpMail()
     {
-        $emailSettings = require_once './email-settings.php';
-        $this->mail = new PHPMailer(true);
-
-        try {
-            $this->mail->SMTPDebug = SMTP::DEBUG_SERVER;
-            $this->mail->isSMTP();
-            $this->mail->Host       = $emailSettings['host'];
-            $this->mail->SMTPAuth   = true;
-            $this->mail->Username   = $emailSettings['username'];
-            $this->mail->Password   = $emailSettings['password'];
-            $this->mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-            $this->mail->Port       = $emailSettings['port'];
-            $this->mail->setFrom($emailSettings['fromAddress'], 'KSL Notifier');
-            $this->mail->addAddress(
-                is_null($this->email)
-                    ? $emailSettings['toAddress']
-                    : $this->email
-            );
-            $this->mail->Subject = 'New KSL Classifieds Result(s) for "' . rawurldecode($this->searchString) . '"';
-        } catch (Exception $e) {
-            echo "Message could not be sent. Mailer Error: {$this->mail->ErrorInfo}";
-        }
+        $emailSettings = require_once './email-settings.php';    
+        $this->mail = new Mail(); 
+        $this->mail->setFrom('no-reply@russell.net', 'KSL Notifier');
+        $this->mail->setSubject('New KSL Classifieds Result(s) for "' . rawurldecode($this->searchString) . '"');
+        $this->mail->addTo(
+            is_null($this->email)
+                ? $emailSettings['toAddress']
+                : $this->email,
+            'KSL Notifier User'
+        );
+        $this->sendgrid = new SendGrid($emailSettings['sendgridApiKey']);
     }
 }
