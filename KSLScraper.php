@@ -22,25 +22,36 @@ class KSLScraper
         $previousResultsList = [];
         $firstRun = true;
 
-        do {
-            $crawler = $this->client->request('GET', "https://classifieds.ksl.com/search/keyword/$this->searchString");
-            $resultsList = $crawler->filter('.item-info-title-link a')->extract(['href']);
-	        $newResults = array_diff($resultsList, $previousResultsList);
-            if (count($newResults) > 0 && !$firstRun) {
-                echo "\n" . 'Found new results!' . "\n";
-                $newResultsString = "\n\n";
-                foreach ($newResults as $key => $result) {
-                    $newResultsString .= '#' . ($key + 1) . ' https://classifieds.ksl.com' . $result . "\n\n";
+        $this->doLoop($firstRun, $previousResultsList);
+    }
+
+    private function doLoop(bool $firstRun, array $previousResultsList)
+    {
+        try {
+            do {
+                $crawler = $this->client->request('GET', "https://classifieds.ksl.com/search/keyword/$this->searchString");
+                $resultsList = $crawler->filter('.item-info-title-link a')->extract(['href']);
+                $newResults = array_diff($resultsList, $previousResultsList);
+                if (count($newResults) > 0 && !$firstRun) {
+                    echo "\n" . 'Found new results!' . "\n";
+                    $newResultsString = "\n\n";
+                    foreach ($newResults as $key => $result) {
+                        $newResultsString .= '#' . ($key + 1) . ' https://classifieds.ksl.com' . $result . "\n\n";
+                    }
+                    $this->sendNotification($newResultsString);
                 }
-                $this->sendNotification($newResultsString);
-            }
 
-            $previousResultsList = $resultsList;
-            $firstRun = false;
-            echo '.';
+                $previousResultsList = $resultsList;
+                $firstRun = false;
+                echo '.';
 
-            sleep(random_int(5, 10) * 60);
-        } while (1);
+                sleep(random_int(5, 10) * 60);
+            } while (1);
+
+        } catch (Exception $e) {
+            echo "\n" . 'Caught exception' . $e->getMessage() . "\n";
+            $this->doLoop($firstRun, $previousResultsList);
+        }
     }
 
     private function sendNotification($newResults = null)
